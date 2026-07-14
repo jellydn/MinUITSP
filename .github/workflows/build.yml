@@ -81,8 +81,15 @@ jobs:
         run: |
           mkdir -p toolchains
           if [ ! -d "toolchains/${{ matrix.platform }}-toolchain" ]; then
-            git clone --depth 1 https://github.com/shauninman/union-${{ matrix.platform }}-toolchain/ \
-              toolchains/${{ matrix.platform }}-toolchain
+            # Use fork if it exists (has updated base images), otherwise upstream
+            TOOLCHAIN_REPO="https://github.com/shauninman/union-${{ matrix.platform }}-toolchain/"
+            if gh api "repos/${{ github.repository_owner }}/union-${{ matrix.platform }}-toolchain" >/dev/null 2>&1; then
+              TOOLCHAIN_REPO="https://github.com/${{ github.repository_owner }}/union-${{ matrix.platform }}-toolchain/"
+              echo "Using forked toolchain: $TOOLCHAIN_REPO"
+            else
+              echo "Using upstream toolchain: $TOOLCHAIN_REPO"
+            fi
+            git clone --depth 1 "$TOOLCHAIN_REPO" toolchains/${{ matrix.platform }}-toolchain
           fi
           cd toolchains/${{ matrix.platform }}-toolchain
           make .build
