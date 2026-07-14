@@ -22,6 +22,7 @@ Bios files
 
 You'll need to BYOB for the emulator paks included in this zip file.
 
+ FBN: neogeo.zip (required for Neo Geo games; use the ROM set matching FBNeo)
 MGBA: gba_bios.bin
  PCE: syscard3.pce
  PKM: bios.min
