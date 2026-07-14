@@ -1,0 +1,206 @@
+name: Build & Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      platforms:
+        description: 'Platforms to build (space-separated, or "all")'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - miyoomini
+          - tg5040
+          - rg35xxplus
+          - rg35xx
+          - trimuismart
+          - rgb30
+          - m17
+          - gkdpixel
+          - my282
+          - my355
+          - magicmini
+          - zero28
+
+env:
+  ALL_PLATFORMS: miyoomini trimuismart rg35xx rg35xxplus my355 tg5040 zero28 rgb30 m17 gkdpixel my282 magicmini
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Phase 1: Determine which platforms to build
+  # ---------------------------------------------------------------------------
+  resolve-platforms:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+    steps:
+      - id: set
+        run: |
+          INPUT="${{ github.event.inputs.platforms || 'all' }}"
+          if [ "$INPUT" = "all" ]; then
+            PLATS="${{ env.ALL_PLATFORMS }}"
+          else
+            PLATS="$INPUT"
+          fi
+          # Build JSON array for matrix
+          MATRIX=$(echo "$PLATS" | tr ' ' '\n' | jq -R . | jq -sc .)
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+          echo "Building platforms: $PLATS"
+
+  # ---------------------------------------------------------------------------
+  # Phase 2: Build each platform in parallel
+  # ---------------------------------------------------------------------------
+  build-platform:
+    needs: resolve-platforms
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: ${{ fromJSON(needs.resolve-platforms.outputs.matrix) }}
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache toolchain Docker image
+        uses: actions/cache@v4
+        with:
+          path: /tmp/toolchain-${{ matrix.platform }}.tar
+          key: toolchain-${{ matrix.platform }}-${{ hashFiles('workspace/${{ matrix.platform }}/makefile') }}
+          restore-keys: |
+            toolchain-${{ matrix.platform }}-
+
+      - name: Clone and build toolchain
+        run: |
+          mkdir -p toolchains
+          if [ ! -d "toolchains/${{ matrix.platform }}-toolchain" ]; then
+            git clone --depth 1 https://github.com/shauninman/union-${{ matrix.platform }}-toolchain/ \
+              toolchains/${{ matrix.platform }}-toolchain
+          fi
+          cd toolchains/${{ matrix.platform }}-toolchain
+          make .build
+
+      - name: Cross-compile platform
+        run: |
+          # Use ci-build (no -it flag) since there is no TTY in CI
+          make -f makefile.toolchain ci-build PLATFORM=${{ matrix.platform }}
+
+      - name: Upload platform build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.platform }}
+          path: |
+            workspace/${{ matrix.platform }}/cores/output/
+          retention-days: 3
+          if-no-files-found: ignore
+
+  # ---------------------------------------------------------------------------
+  # Phase 3: Package all platforms into release ZIPs
+  # ---------------------------------------------------------------------------
+  package:
+    needs: [resolve-platforms, build-platform]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Copy built cores into workspace
+        run: |
+          for platform in ${{ env.ALL_PLATFORMS }}; do
+            artifact_dir="artifacts/build-${platform}"
+            if [ -d "$artifact_dir" ]; then
+              dest="workspace/${platform}/cores/output"
+              mkdir -p "$dest"
+              cp -v "$artifact_dir"/* "$dest/" 2>/dev/null || true
+              echo "Restored cores for $platform"
+            else
+              echo "No artifacts for $platform (skipped or failed)"
+            fi
+          done
+
+      - name: Build skeleton
+        run: make setup
+
+      - name: Build system for each platform
+        run: |
+          for platform in ${{ env.ALL_PLATFORMS }}; do
+            if [ -f "workspace/${platform}/platform/makefile.copy" ]; then
+              echo "=== Building system for $platform ==="
+              make system PLATFORM=${platform} || echo "WARN: system build failed for $platform"
+              make cores PLATFORM=${platform} || echo "WARN: cores copy failed for $platform"
+            else
+              echo "=== Skipping $platform (no makefile.copy) ==="
+            fi
+          done
+
+      - name: Finalize package
+        run: |
+          make special
+          make tidy
+          make package
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: releases/
+          retention-days: 5
+
+  # ---------------------------------------------------------------------------
+  # Phase 4: Create GitHub Release (tag pushes only)
+  # ---------------------------------------------------------------------------
+  release:
+    needs: package
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release
+          path: releases/
+
+      - name: List release files
+        run: ls -lh releases/
+
+      - name: Create GitHub Release with gh CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.ref_name }}"
+
+          # Build release notes
+          NOTES="## MinUI ${TAG}\n\n"
+          NOTES+="### Installation\n"
+          NOTES+="1. Download the base ZIP for your device below\n"
+          NOTES+="2. Extract and copy \`MinUI.zip\` to your SD card root\n"
+          NOTES+="3. Power on your device -- MinUI will install/update automatically\n\n"
+          NOTES+="### Included Platforms\n"
+
+          for f in releases/*-base.zip; do
+            name=$(basename "$f" .zip)
+            NOTES+="- ${name}\n"
+          done
+
+          NOTES+="\n### Changelog\n"
+          NOTES+="See the commit history for details."
+
+          gh release create "$TAG" \
+            releases/*.zip \
+            --title "MinUI ${TAG}" \
+            --notes "$(echo -e "$NOTES")"
+
+          echo "Release created: https://github.com/${{ github.repository }}/releases/tag/${TAG}"
