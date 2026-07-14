@@ -50,6 +50,12 @@ This fork focuses exclusively on the tg5040 platform (TrimUI Smart Pro / Brick) 
 - **Gameplay overlays** -- Transparent PNG overlays for in-game HUD elements.
 - **Patched cores** -- Pokemini deferred save state fix for reliable resume.
 
+## Why not NextUI?
+
+[NextUI](https://github.com/LoveRetro/NextUI) is an active community fork of MinUI for TrimUI Brick and Smart Pro with a rebuilt emulation engine, GPU rendering, shaders, WiFi support, RetroAchievements, and many more features. If you're looking for a feature-rich experience, check it out.
+
+This fork intentionally keeps it minimal. We want to stay close to upstream MinUI's philosophy: fast boots, no distractions, everything just works. NextUI already exists for users who want the full feature set. This fork is for users who specifically want the stock MinUI experience -- simple, reliable, and focused -- with CI/CD builds and TSP-specific fixes on top.
+
 ## Supported consoles
 
 Base:
