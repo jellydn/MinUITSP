@@ -41,7 +41,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build
-          path: workspace/trimuismart/cores/output/
+          path: workspace/
           retention-days: 3
 
   # ---------------------------------------------------------------------------
@@ -57,7 +57,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build
-          path: workspace/trimuismart/cores/output/
+          path: workspace/
 
       - name: Build skeleton
         run: make setup
