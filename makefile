@@ -88,9 +88,7 @@ special:
 	cp -R ./build/BOOT/.tmp_update ./build/BASE/trimui/app/
 
 tidy:
-	# tg3040 (Brick) compatibility
-	mkdir -p ./build/SYSTEM/tg3040/paks/MinUI.pak/
-	cp ./build/SYSTEM/tg5040/bin/install.sh ./build/SYSTEM/tg3040/paks/MinUI.pak/launch.sh
+	# no platform-specific tidying needed
 
 package: tidy
 	# move formatted readmes from workspace to build
