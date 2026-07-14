@@ -59,24 +59,19 @@ jobs:
           name: build
           path: workspace/trimuismart/cores/output/
 
-      - name: Patch makefile for CI compatibility
-        run: |
-          sed -i 's/find -E \(\.\/releases\.\/\.\)/find \1 -regextype posix-extended/' makefile
-          sed -i 's/tty -s/#tty -s (skipped in CI)/' makefile
-
       - name: Build skeleton
         run: make setup
 
       - name: Build system
         run: |
-          make system PLATFORM=trimuismart
-          make cores PLATFORM=trimuismart
+          make system
+          make cores
 
       - name: Finalize package
         run: |
-          make special PLATFORMS=trimuismart
-          make tidy PLATFORMS=trimuismart
-          make package PLATFORMS=trimuismart
+          make special
+          make tidy
+          make package
 
       - name: Upload release artifacts
         uses: actions/upload-artifact@v4
