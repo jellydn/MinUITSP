@@ -81,14 +81,17 @@ jobs:
         run: |
           mkdir -p toolchains
           if [ ! -d "toolchains/${{ matrix.platform }}-toolchain" ]; then
-            # Use fork if it exists (has updated base images), otherwise upstream
-            TOOLCHAIN_REPO="https://github.com/shauninman/union-${{ matrix.platform }}-toolchain/"
-            if gh api "repos/${{ github.repository_owner }}/union-${{ matrix.platform }}-toolchain" >/dev/null 2>&1; then
-              TOOLCHAIN_REPO="https://github.com/${{ github.repository_owner }}/union-${{ matrix.platform }}-toolchain/"
-              echo "Using forked toolchain: $TOOLCHAIN_REPO"
-            else
-              echo "Using upstream toolchain: $TOOLCHAIN_REPO"
-            fi
+            # Platform-specific fork overrides (updated base images for CI compatibility)
+            case "${{ matrix.platform }}" in
+              trimuismart)
+                TOOLCHAIN_REPO="https://github.com/jellydn/union-trimuismart-toolchain/"
+                echo "Using forked toolchain: $TOOLCHAIN_REPO"
+                ;;
+              *)
+                TOOLCHAIN_REPO="https://github.com/shauninman/union-${{ matrix.platform }}-toolchain/"
+                echo "Using upstream toolchain: $TOOLCHAIN_REPO"
+                ;;
+            esac
             git clone --depth 1 "$TOOLCHAIN_REPO" toolchains/${{ matrix.platform }}-toolchain
           fi
           cd toolchains/${{ matrix.platform }}-toolchain
