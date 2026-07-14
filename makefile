@@ -77,6 +77,9 @@ setup: name
 	mkdir -p ./workspace/readmes
 	cp ./skeleton/BASE/README.txt ./workspace/readmes/BASE-in.txt
 	cp ./skeleton/EXTRAS/README.txt ./workspace/readmes/EXTRAS-in.txt
+	cd ./workspace/readmes && fmt -w 40 -s ./BASE-in.txt > ./BASE-out.txt 2>/dev/null || true
+	cd ./workspace/readmes && fmt -w 40 -s ./EXTRAS-in.txt > ./EXTRAS-out.txt 2>/dev/null || true
+	cd ./workspace/readmes && rm ./*-in.txt 2>/dev/null || true
 
 done:
 	say "done" 2>/dev/null || true
