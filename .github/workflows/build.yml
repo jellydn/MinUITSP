@@ -142,7 +142,8 @@ jobs:
       - name: Patch makefile for CI compatibility
         run: |
           # Fix 1: Replace macOS-only `find -E` with GNU find equivalent
-          sed -i 's/find -E/find -regextype posix-extended/' makefile
+          # GNU find requires path BEFORE predicates
+          sed -i 's/find -E \(\.\/releases\.\/\.\)/find \1 -regextype posix-extended/' makefile
           # Fix 2: Allow setup to run without a TTY (CI has no terminal)
           sed -i 's/tty -s/#tty -s (skipped in CI)/' makefile
 
@@ -152,20 +153,29 @@ jobs:
       - name: Build system for each platform
         run: |
           for platform in ${{ env.ALL_PLATFORMS }}; do
-            if [ -f "workspace/${platform}/platform/makefile.copy" ]; then
+            artifact_dir="artifacts/build-${platform}"
+            if [ -d "$artifact_dir" ] && [ -f "workspace/${platform}/platform/makefile.copy" ]; then
               echo "=== Building system for $platform ==="
               make system PLATFORM=${platform} || echo "WARN: system build failed for $platform"
               make cores PLATFORM=${platform} || echo "WARN: cores copy failed for $platform"
             else
-              echo "=== Skipping $platform (no makefile.copy) ==="
+              echo "=== Skipping $platform (no artifacts or no makefile.copy) ==="
             fi
           done
 
       - name: Finalize package
         run: |
-          make special
-          make tidy
-          make package
+          # Derive PLATFORMS from what was actually built (skip platforms with no artifacts)
+          BUILT=""
+          for platform in ${{ env.ALL_PLATFORMS }}; do
+            if [ -d "artifacts/build-${platform}" ]; then
+              BUILT="${BUILT} ${platform}"
+            fi
+          done
+          echo "Packaging platforms:${BUILT}"
+          make special PLATFORMS="${BUILT}"
+          make tidy PLATFORMS="${BUILT}"
+          make package PLATFORMS="${BUILT}"
 
       - name: Upload release artifacts
         uses: actions/upload-artifact@v4
