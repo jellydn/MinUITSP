@@ -28,9 +28,23 @@ MinUI is a focused, custom launcher and libretro frontend for [a variety of retr
   the launcher instead of A
 - Streamlined emulator frontend 
   (minarch + libretro cores)
+- Optional per-system gameplay overlays
+  on Trimui Brick and Smart Pro
 - Single SD card compatible with
   multiple devices from different
   manufacturers
+
+### Gameplay overlays
+
+On Trimui Brick and Smart Pro, place transparent PNG overlays in
+`/Overlays/<TAG>/` on the SD card, where `<TAG>` is the emulator tag used by
+the ROM folder (for example, `/Overlays/GB/` or `/Overlays/GBA/`). For best
+results, use the device's native resolution: 1024x768 for Brick and 1280x720
+for Smart Pro.
+
+Launch a game, then select **Options > Frontend > Overlay** to choose one.
+The selection can be saved for the console or only for the current game using
+MinUI's existing **Save Changes** menu.
 
 You can [grab the latest version here](https://github.com/shauninman/MinUI/releases).
 

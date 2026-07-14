@@ -40,6 +40,7 @@ static struct VID_Context {
 	SDL_Texture* texture;
 	SDL_Texture* target;
 	SDL_Texture* effect;
+	SDL_Texture* game_overlay;
 	SDL_Surface* buffer;
 	SDL_Surface* screen;
 	
@@ -144,6 +145,7 @@ void PLAT_quitVideo(void) {
 	SDL_FreeSurface(vid.buffer);
 	if (vid.target) SDL_DestroyTexture(vid.target);
 	if (vid.effect) SDL_DestroyTexture(vid.effect);
+	if (vid.game_overlay) SDL_DestroyTexture(vid.game_overlay);
 	SDL_DestroyTexture(vid.texture);
 	SDL_DestroyRenderer(vid.renderer);
 	SDL_DestroyWindow(vid.window);
@@ -354,6 +356,28 @@ void PLAT_setEffect(int next_type) {
 void PLAT_setEffectColor(int next_color) {
 	effect.next_color = next_color;
 }
+void PLAT_setGameOverlay(const char* path) {
+	if (vid.game_overlay) {
+		SDL_DestroyTexture(vid.game_overlay);
+		vid.game_overlay = NULL;
+	}
+
+	if (!path || !path[0]) return;
+
+	SDL_Surface* surface = IMG_Load(path);
+	if (!surface) {
+		LOG_warn("Unable to load game overlay %s: %s\n", path, IMG_GetError());
+		return;
+	}
+
+	vid.game_overlay = SDL_CreateTextureFromSurface(vid.renderer, surface);
+	SDL_FreeSurface(surface);
+	if (!vid.game_overlay) {
+		LOG_warn("Unable to create game overlay texture: %s\n", SDL_GetError());
+		return;
+	}
+	SDL_SetTextureBlendMode(vid.game_overlay, SDL_BLENDMODE_BLEND);
+}
 void PLAT_vsync(int remaining) {
 	if (remaining>0) SDL_Delay(remaining);
 }
@@ -438,6 +462,9 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	updateEffect();
 	if (vid.blit && effect.type!=EFFECT_NONE && vid.effect) {
 		SDL_RenderCopy(vid.renderer, vid.effect, &(SDL_Rect){0,0,dst_rect->w,dst_rect->h}, dst_rect);
+	}
+	if (vid.game_overlay) {
+		SDL_RenderCopy(vid.renderer, vid.game_overlay, NULL, NULL);
 	}
 	// uint32_t then = SDL_GetTicks();
 	SDL_RenderPresent(vid.renderer);

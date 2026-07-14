@@ -125,6 +125,8 @@ extern int is_brick;
 #define FIXED_PITCH		(FIXED_WIDTH * FIXED_BPP)
 #define FIXED_SIZE		(FIXED_PITCH * FIXED_HEIGHT)
 
+#define HAS_GAME_OVERLAYS 1
+
 ///////////////////////////////
 
 #define MAIN_ROW_COUNT (is_brick?7:8)
