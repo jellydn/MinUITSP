@@ -12,15 +12,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Cache toolchain Docker image
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: /tmp/toolchain-trimuismart.tar
           key: toolchain-trimuismart-${{ hashFiles('workspace/trimuismart/makefile') }}
@@ -38,7 +38,7 @@ jobs:
           make -f makefile.toolchain ci-build PLATFORM=trimuismart
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: build
           path: workspace/
@@ -51,10 +51,10 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: build
           path: workspace/
@@ -74,7 +74,7 @@ jobs:
           make package
 
       - name: Upload release artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: release
           path: releases/
@@ -91,7 +91,7 @@ jobs:
       contents: write
     steps:
       - name: Download release artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: release
           path: releases/
