@@ -16,9 +16,9 @@ index 0b7d646c7..2784aa150 100644
 +	SHARED := -shared -Wl,-no-undefined -Wl,--version-script=$(VERSION_SCRIPT)
 +	PLATFORM_FLAGS := -O3 -Ofast -DNDEBUG=1 -fomit-frame-pointer -ffast-math -mtune=cortex-a53 -mcpu=cortex-a53 -march=armv8-a+simd
 +	USE_EXPERIMENTAL_FLAGS = 0
-+	HAVE_NEON = 1
-+	USE_CYCLONE = 1
-+	ARCH = arm
++	HAVE_NEON = 0
++	USE_CYCLONE = 0
++	ARCH = arm64
 +	ENDIANNESS_DEFINES := -DLSB_FIRST
 +	LDFLAGS += -lstdc++ -static-libgcc -static-libstdc++ -lpthread -lm -flto
 +	CFLAGS += $(PLATFORM_FLAGS)
@@ -31,12 +31,14 @@ diff --git a/src/burner/libretro/libretro.cpp b/src/burner/libretro/libretro.cpp
 index 3726ec60f..30a6c8cd6 100644
 --- a/src/burner/libretro/libretro.cpp
 +++ b/src/burner/libretro/libretro.cpp
-@@ -78,7 +78,7 @@ INT32 nAudSegLen = 0;
+@@ -78,7 +78,9 @@ INT32 nAudSegLen = 0;
  
  static UINT8* pVidImage              = NULL;
  static bool bVidImageNeedRealloc     = false;
 -static bool bRotationDone            = false;
 +static bool bRotationDone            = true;
++static UINT8 *pRotateTmp              = NULL;
++static size_t nRotateTmpSize         = 0;
  static int16_t *pAudBuffer           = NULL;
  static char text_missing_files[2048] = "";
  
@@ -48,40 +50,49 @@ index 3726ec60f..30a6c8cd6 100644
 +    UINT32 flags = BurnDrvGetFlags();
 +
 +    if (pBurnDraw && flags & BDF_ORIENTATION_VERTICAL) {
-+        int y=0;
++        int y = 0;
++        size_t need = (size_t)nGameWidth * nGameHeight * nBurnBpp;
 +
-+        UINT8 *pTMP = (UINT8*)malloc(nGameWidth * nGameHeight * nBurnBpp);
-+        memcpy(pTMP, pBurnDraw, nGameWidth * nGameHeight * nBurnBpp);
-+
-+        int newGameWidth = nGameHeight;
-+        int newGameHeight = nGameWidth;
-+        int newBurnPitch = newGameWidth * nBurnBpp;
-+
-+		if ((BurnDrvGetFlags() & BDF_ORIENTATION_VERTICAL))
-+        while (y < newGameHeight) {
-+            int x = 0;
-+
-+		    if ( flags & BDF_ORIENTATION_FLIPPED ) {
-+                while (x < newGameWidth)
-+                {
-+                    for (int i = 0; i < nBurnBpp; i++)
-+                        pBurnDraw[x * nBurnBpp + y * newBurnPitch + i] = pTMP[(nGameHeight - x - 1) * nBurnPitch + y * nBurnBpp + i];
-+                    x++;
-+                }
++        if (need > nRotateTmpSize) {
++            UINT8 *p = (UINT8*)realloc(pRotateTmp, need);
++            if (!p) {
++                video_cb(pBurnDraw, nGameWidth, nGameHeight, nBurnPitch);
++                need = 0;
 +            } else {
-+                while (x < newGameWidth)
-+                {
-+                    for (int i = 0; i < nBurnBpp; i++)
-+                        pBurnDraw[x * nBurnBpp + y * newBurnPitch + i] = pTMP[x * nBurnPitch + (nGameWidth - y - 1) * nBurnBpp + i];
-+                    x++;
-+                }
++                pRotateTmp = p;
++                nRotateTmpSize = need;
 +            }
-+            y++;
 +        }
-+        free(pTMP);
-+	    video_cb(pBurnDraw, newGameWidth, newGameHeight, newBurnPitch);
++
++        if (need && pRotateTmp) {
++            memcpy(pRotateTmp, pBurnDraw, need);
++
++            int newGameWidth = nGameHeight;
++            int newGameHeight = nGameWidth;
++            int newBurnPitch = newGameWidth * nBurnBpp;
++
++            while (y < newGameHeight) {
++                int x = 0;
++
++                if (flags & BDF_ORIENTATION_FLIPPED) {
++                    while (x < newGameWidth) {
++                        for (int i = 0; i < nBurnBpp; i++)
++                            pBurnDraw[x * nBurnBpp + y * newBurnPitch + i] = pRotateTmp[(nGameHeight - x - 1) * nBurnPitch + y * nBurnBpp + i];
++                        x++;
++                    }
++                } else {
++                    while (x < newGameWidth) {
++                        for (int i = 0; i < nBurnBpp; i++)
++                            pBurnDraw[x * nBurnBpp + y * newBurnPitch + i] = pRotateTmp[x * nBurnPitch + (nGameWidth - y - 1) * nBurnBpp + i];
++                        x++;
++                    }
++                }
++                y++;
++            }
++            video_cb(pBurnDraw, newGameWidth, newGameHeight, newBurnPitch);
++        }
 +    } else {
-+	    video_cb(pBurnDraw, nGameWidth, nGameHeight, nBurnPitch);
++        video_cb(pBurnDraw, nGameWidth, nGameHeight, nBurnPitch);
 +    }
  
 -	video_cb(pBurnDraw, nGameWidth, nGameHeight, nBurnPitch);
