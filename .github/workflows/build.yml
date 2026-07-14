@@ -139,6 +139,13 @@ jobs:
             fi
           done
 
+      - name: Patch makefile for CI compatibility
+        run: |
+          # Fix 1: Replace macOS-only `find -E` with GNU find equivalent
+          sed -i 's/find -E/find -regextype posix-extended/' makefile
+          # Fix 2: Allow setup to run without a TTY (CI has no terminal)
+          sed -i 's/tty -s/#tty -s (skipped in CI)/' makefile
+
       - name: Build skeleton
         run: make setup
 
