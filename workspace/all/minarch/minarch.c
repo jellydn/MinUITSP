@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <zlib.h>
 #include <pthread.h>
+#include <dirent.h>
 
 #include "libretro.h"
 #include "defines.h"
@@ -625,6 +626,12 @@ static char* effect_labels[] = {
 	"Grid",
 	NULL
 };
+#if HAS_GAME_OVERLAYS
+static char* default_overlay_labels[] = {
+	"None",
+	NULL
+};
+#endif
 static char* sharpness_labels[] = {
 	"Sharp",
 	"Crisp",
@@ -654,6 +661,9 @@ static char* max_ff_labels[] = {
 enum {
 	FE_OPT_SCALING,
 	FE_OPT_EFFECT,
+#if HAS_GAME_OVERLAYS
+	FE_OPT_OVERLAY,
+#endif
 	FE_OPT_SHARPNESS,
 	FE_OPT_TEARING,
 	FE_OPT_OVERCLOCK,
@@ -858,6 +868,18 @@ static struct Config {
 				.values = effect_labels,
 				.labels = effect_labels,
 			},
+#if HAS_GAME_OVERLAYS
+			[FE_OPT_OVERLAY] = {
+				.key	= "minarch_overlay",
+				.name	= "Overlay",
+				.desc	= "Choose artwork from the Overlays folder.",
+				.default_value = 0,
+				.value = 0,
+				.count = 1,
+				.values = default_overlay_labels,
+				.labels = default_overlay_labels,
+			},
+#endif
 			[FE_OPT_SHARPNESS] = {
 				.key	= "minarch_screen_sharpness",
 				.name	= "Screen Sharpness",
@@ -986,6 +1008,19 @@ static void Config_syncFrontend(char* key, int value) {
 		renderer.dst_p = 0;
 		i = FE_OPT_EFFECT;
 	}
+#if HAS_GAME_OVERLAYS
+	else if (exactMatch(key,config.frontend.options[FE_OPT_OVERLAY].key)) {
+		Option* option = &config.frontend.options[FE_OPT_OVERLAY];
+		if (value >= 0 && value < option->count) {
+			char path[MAX_PATH] = {0};
+			if (value > 0) {
+				snprintf(path, sizeof(path), SDCARD_PATH "/Overlays/%s/%s", core.tag, option->values[value]);
+			}
+			PLAT_setGameOverlay(path);
+			i = FE_OPT_OVERLAY;
+		}
+	}
+#endif
 	else if (exactMatch(key,config.frontend.options[FE_OPT_SHARPNESS].key)) {
 		screen_sharpness = value;
 		
@@ -1032,10 +1067,71 @@ static void Config_getPath(char* filename, int override) {
 	else sprintf(filename, "%s/minarch%s.cfg", core.config_dir, device_tag);
 	LOG_info("Config_getPath %s\n", filename);
 }
+#if HAS_GAME_OVERLAYS
+static int Config_compareOverlayNames(const void* a, const void* b) {
+	return strcmp(*(const char* const*)a, *(const char* const*)b);
+}
+static void Config_findOverlays(void) {
+	char path[MAX_PATH];
+	snprintf(path, sizeof(path), SDCARD_PATH "/Overlays/%s", core.tag);
+
+	DIR* dir = opendir(path);
+	if (!dir) return;
+
+	char** labels = calloc(2, sizeof(char*));
+	if (!labels) {
+		closedir(dir);
+		return;
+	}
+	labels[0] = strdup("None");
+	if (!labels[0]) {
+		free(labels);
+		closedir(dir);
+		return;
+	}
+	int count = 1;
+
+	struct dirent* entry;
+	while ((entry = readdir(dir))) {
+		if (entry->d_name[0] == '.' || !suffixMatch(".png", entry->d_name)) continue;
+
+		char file_path[MAX_PATH];
+		snprintf(file_path, sizeof(file_path), "%s/%s", path, entry->d_name);
+		struct stat file_stat;
+		if (stat(file_path, &file_stat) != 0 || !S_ISREG(file_stat.st_mode)) continue;
+
+		char* name = strdup(entry->d_name);
+		if (!name) break;
+		char** resized = realloc(labels, sizeof(char*) * (count + 2));
+		if (!resized) {
+			free(name);
+			break;
+		}
+		labels = resized;
+		labels[count++] = name;
+		labels[count] = NULL;
+	}
+	closedir(dir);
+
+	if (count > 2) qsort(labels + 1, count - 1, sizeof(char*), Config_compareOverlayNames);
+	Option* option = &config.frontend.options[FE_OPT_OVERLAY];
+	option->values = labels;
+	option->labels = labels;
+	option->count = count;
+}
+#endif
 static void Config_init(void) {
-	if (!config.default_cfg || config.initialized) return;
+	if (config.initialized) return;
 	
 	LOG_info("Config_init\n");
+#if HAS_GAME_OVERLAYS
+	Config_findOverlays();
+#endif
+	if (!config.default_cfg) {
+		config.initialized = 1;
+		return;
+	}
+
 	char* tmp = config.default_cfg;
 	char* tmp2;
 	char* key;
@@ -1103,6 +1199,13 @@ static void Config_quit(void) {
 	for (int i=0; core_button_mapping[i].name; i++) {
 		free(core_button_mapping[i].name);
 	}
+#if HAS_GAME_OVERLAYS
+	Option* option = &config.frontend.options[FE_OPT_OVERLAY];
+	if (option->values != default_overlay_labels) {
+		for (int i=0; i<option->count; i++) free(option->values[i]);
+		free(option->values);
+	}
+#endif
 }
 static void Config_readOptionsString(char* cfg) {
 	if (!cfg) return;

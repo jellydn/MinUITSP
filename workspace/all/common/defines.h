@@ -89,6 +89,10 @@
 #define HAS_MENU_BUTTON (BUTTON_MENU!=BUTTON_NA||CODE_MENU!=CODE_NA||JOY_MENU!=JOY_NA)
 #define HAS_SKINNY_SCREEN (FIXED_WIDTH<320)
 
+#ifndef HAS_GAME_OVERLAYS
+#define HAS_GAME_OVERLAYS 0
+#endif
+
 ///////////////////////////////
 
 #define BUTTON_NA	-1

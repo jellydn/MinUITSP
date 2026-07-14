@@ -326,6 +326,10 @@ void PLAT_blitRenderer(GFX_Renderer* renderer);
 void PLAT_flip(SDL_Surface* screen, int sync);
 int PLAT_supportsOverscan(void);
 
+#if HAS_GAME_OVERLAYS
+void PLAT_setGameOverlay(const char* path);
+#endif
+
 SDL_Surface* PLAT_initOverlay(void);
 void PLAT_quitOverlay(void);
 void PLAT_enableOverlay(int enable);
