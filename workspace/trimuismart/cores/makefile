@@ -1,5 +1,5 @@
 CORES = fceumm gambatte gpsp pcsx_rearmed picodrive snes9x2005_plus
-CORES+= mednafen_pce_fast mednafen_vb mednafen_supafaust mgba pokemini race
+CORES+= mednafen_pce_fast mednafen_vb mednafen_supafaust mgba pokemini race fbneo
 # CORES+= fake-08
 
 ###############################
@@ -35,6 +35,11 @@ pokemini_MAKEFILE = Makefile.libretro
 
 snes9x2005_plus_REPO = https://github.com/libretro/snes9x2005
 snes9x2005_plus_FLAGS = USE_BLARGG_APU=1
+
+fbneo_REPO = https://github.com/libretro/FBNeo
+fbneo_CORE = fbneo_libretro.so
+fbneo_BUILD_PATH = fbneo/src/burner/libretro
+fbneo_HASH = 6a5cc250c2db8d874a06ee86e302a2a78918b4c1
 
 ###############################
 
