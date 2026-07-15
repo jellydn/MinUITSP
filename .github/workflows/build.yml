@@ -7,9 +7,9 @@ on:
 
 jobs:
   # ---------------------------------------------------------------------------
-  # Phase 1: Build toolchain and cross-compile cores
+  # Phase 1a: Build trimuismart (TSP model S) toolchain and cross-compile
   # ---------------------------------------------------------------------------
-  build:
+  build-trimuismart:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -19,7 +19,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Cache toolchain Docker image
+      - name: Cache trimuismart toolchain
         uses: actions/cache@v5
         with:
           path: /tmp/toolchain-trimuismart.tar
@@ -40,7 +40,45 @@ jobs:
       - name: Upload build artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: build
+          name: build-trimuismart
+          path: workspace/
+          retention-days: 3
+
+  # ---------------------------------------------------------------------------
+  # Phase 1b: Build tg5040 (TSP/Brick) toolchain and cross-compile
+  # ---------------------------------------------------------------------------
+  build-tg5040:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Cache tg5040 toolchain
+        uses: actions/cache@v5
+        with:
+          path: /tmp/toolchain-tg5040.tar
+          key: toolchain-tg5040-${{ hashFiles('workspace/tg5040/makefile') }}
+          restore-keys: |
+            toolchain-tg5040-
+
+      - name: Clone and build toolchain
+        run: |
+          git clone --depth 1 https://github.com/jellydn/union-tg5040-toolchain/ toolchains/tg5040-toolchain
+          cd toolchains/tg5040-toolchain
+          make .build
+
+      - name: Cross-compile
+        run: |
+          make -f makefile.toolchain ci-build PLATFORM=tg5040
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: build-tg5040
           path: workspace/
           retention-days: 3
 
@@ -48,24 +86,63 @@ jobs:
   # Phase 2: Package release ZIPs
   # ---------------------------------------------------------------------------
   package:
-    needs: build
+    needs: [build-trimuismart, build-tg5040]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
 
-      - name: Download build artifacts
+      - name: Download trimuismart build artifacts
         uses: actions/download-artifact@v7
         with:
-          name: build
-          path: workspace/
+          name: build-trimuismart
+          path: workspace-trimuismart/
+
+      - name: Download tg5040 build artifacts
+        uses: actions/download-artifact@v7
+        with:
+          name: build-tg5040
+          path: workspace-tg5040/
+
+      - name: Merge workspace directories
+        run: |
+          cp -r workspace-trimuismart/* workspace/ 2>/dev/null || true
+          cp -r workspace-tg5040/* workspace/ 2>/dev/null || true
 
       - name: Build skeleton
         run: make setup
 
-      - name: Build system
+      - name: Build system (trimuismart)
         run: |
           make system
           make cores
+
+      - name: Populate tg5040 system
+        run: |
+          cp ./workspace/tg5040/keymon/keymon.elf ./build/SYSTEM/tg5040/bin/
+          cp ./workspace/tg5040/libmsettings/libmsettings.so ./build/SYSTEM/tg5040/lib/ 2>/dev/null || true
+          cp ./workspace/all/minui/build/tg5040/minui.elf ./build/SYSTEM/tg5040/bin/
+          cp ./workspace/all/minarch/build/tg5040/minarch.elf ./build/SYSTEM/tg5040/bin/
+          cp ./workspace/all/syncsettings/build/tg5040/syncsettings.elf ./build/SYSTEM/tg5040/bin/
+          cp ./workspace/all/say/build/tg5040/say.elf ./build/SYSTEM/tg5040/bin/
+          cp ./workspace/tg5040/show/show.elf ./build/SYSTEM/tg5040/bin/
+          # tg5040 cores
+          cp ./workspace/tg5040/cores/output/fceumm_libretro.so ./build/SYSTEM/tg5040/cores
+          cp ./workspace/tg5040/cores/output/gambatte_libretro.so ./build/SYSTEM/tg5040/cores
+          cp ./workspace/tg5040/cores/output/gpsp_libretro.so ./build/SYSTEM/tg5040/cores
+          cp ./workspace/tg5040/cores/output/picodrive_libretro.so ./build/SYSTEM/tg5040/cores
+          cp ./workspace/tg5040/cores/output/snes9x2005_plus_libretro.so ./build/SYSTEM/tg5040/cores
+          cp ./workspace/tg5040/cores/output/pcsx_rearmed_libretro.so ./build/SYSTEM/tg5040/cores
+          # tg5040 extras
+          cp ./workspace/tg5040/cores/output/mgba_libretro.so ./build/EXTRAS/Emus/tg5040/MGBA.pak
+          cp ./workspace/tg5040/cores/output/mgba_libretro.so ./build/EXTRAS/Emus/tg5040/SGB.pak
+          cp ./workspace/tg5040/cores/output/mednafen_pce_fast_libretro.so ./build/EXTRAS/Emus/tg5040/PCE.pak
+          cp ./workspace/tg5040/cores/output/pokemini_libretro.so ./build/EXTRAS/Emus/tg5040/PKM.pak
+          cp ./workspace/tg5040/cores/output/race_libretro.so ./build/EXTRAS/Emus/tg5040/NGP.pak
+          cp ./workspace/tg5040/cores/output/race_libretro.so ./build/EXTRAS/Emus/tg5040/NGPC.pak
+          cp ./workspace/tg5040/cores/output/mednafen_supafaust_libretro.so ./build/EXTRAS/Emus/tg5040/SUPA.pak
+          cp ./workspace/tg5040/cores/output/mednafen_vb_libretro.so ./build/EXTRAS/Emus/tg5040/VB.pak || true
+          cp ./workspace/tg5040/cores/output/fbneo_libretro.so ./build/EXTRAS/Emus/tg5040/FBN.pak || true
+          cp ./workspace/tg5040/cores/output/fake08_libretro.so ./build/EXTRAS/Emus/tg5040/P8.pak || true
 
       - name: Finalize package
         run: |
