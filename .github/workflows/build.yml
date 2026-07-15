@@ -125,20 +125,13 @@ jobs:
           cp ./workspace/all/syncsettings/build/tg5040/syncsettings.elf ./build/SYSTEM/tg5040/bin/
           cp ./workspace/all/say/build/tg5040/say.elf ./build/SYSTEM/tg5040/bin/
           cp ./workspace/tg5040/show/show.elf ./build/SYSTEM/tg5040/bin/
-          # tg5040 boot script and installer assets
-          cp ./workspace/tg5040/install/boot.sh ./build/SYSTEM/tg5040/bin/tg5040.sh
-          mkdir -p ./build/BOOT/.tmp_update/tg5040
-          cp ./workspace/tg5040/install/*.png ./build/BOOT/.tmp_update/tg5040/
-          cp -r ./workspace/tg5040/install/brick ./build/BOOT/.tmp_update/tg5040/
-          cp ./workspace/tg5040/show/show.elf ./build/BOOT/.tmp_update/tg5040/
-          cp ./workspace/tg5040/other/unzip60/unzip ./build/BOOT/.tmp_update/tg5040/
           # tg5040 boot script (updater dispatches to .tmp_update/tg5040.sh)
-          cp ./workspace/tg5040/install/boot.sh ./build/BOOT/.tmp_update/tg5040.sh
-          mkdir -p ./build/BOOT/.tmp_update/tg5040
-          cp ./workspace/tg5040/install/*.png ./build/BOOT/.tmp_update/tg5040/
-          cp -r ./workspace/tg5040/install/brick ./build/BOOT/.tmp_update/tg5040/
-          cp ./workspace/tg5040/show/show.elf ./build/BOOT/.tmp_update/tg5040/
-          cp ./workspace/tg5040/other/unzip60/unzip ./build/BOOT/.tmp_update/tg5040/
+          cp ./workspace/tg5040/install/boot.sh ./build/BOOT/common/tg5040.sh
+          mkdir -p ./build/BOOT/common/tg5040
+          cp ./workspace/tg5040/install/*.png ./build/BOOT/common/tg5040/
+          cp -r ./workspace/tg5040/install/brick ./build/BOOT/common/tg5040/
+          cp ./workspace/tg5040/show/show.elf ./build/BOOT/common/tg5040/
+          cp ./workspace/tg5040/other/unzip60/unzip ./build/BOOT/common/tg5040/ 2>/dev/null || true
           # tg5040 cores
           cp ./workspace/tg5040/cores/output/fceumm_libretro.so ./build/SYSTEM/tg5040/cores
           cp ./workspace/tg5040/cores/output/gambatte_libretro.so ./build/SYSTEM/tg5040/cores
