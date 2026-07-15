@@ -1,17 +1,150 @@
 diff --git a/src/burner/libretro/Makefile b/src/burner/libretro/Makefile
-index 0b7d646c7..2784aa150 100644
+index 0f097afd7..f1606d0e3 100644
 --- a/src/burner/libretro/Makefile
 +++ b/src/burner/libretro/Makefile
-@@ -346,6 +346,24 @@ else ifeq ($(platform), classic_armv7_a7)
+@@ -79,18 +79,18 @@ ifneq (,$(findstring unix,$(platform)))
+ 	ifneq (,$(findstring rpi1,$(platform)))
+ 		PLATFORM_DEFINES := -marm -mcpu=arm1176jzf-s -mfpu=vfp -mfloat-abi=hard
+ 		HAVE_NEON = 0
+-		USE_CYCLONE = 1
++		USE_CYCLONE = 0
+ 	else ifneq (,$(findstring rpi2,$(platform)))
+ 		PLATFORM_DEFINES := -marm -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
+-		HAVE_NEON = 1
+-		USE_CYCLONE = 1
++		HAVE_NEON = 0
++		USE_CYCLONE = 0
+ 	else ifneq (,$(findstring rpi3,$(platform)))
+ 		ifneq (,$(findstring rpi3_64,$(platform)))
+ 			PLATFORM_DEFINES := -march=armv8-a+crc+simd -mtune=cortex-a53
+ 		else
+ 			PLATFORM_DEFINES := -marm -mcpu=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
+-			HAVE_NEON = 1
+-			USE_CYCLONE = 1
++			HAVE_NEON = 0
++			USE_CYCLONE = 0
+ 		endif
+ 	else ifneq (,$(findstring rpi4_64,$(platform)))
+ 		PLATFORM_DEFINES := -march=armv8-a+crc+simd -mtune=cortex-a72
+@@ -112,9 +112,9 @@ ifneq (,$(findstring unix,$(platform)))
+ 			CXX = arm-linux-androideabi-g++
+ 			PLATFORM_DEFINES += -DANDROID -Dlog2\(x\)=\(log\(x\)/1.4426950408889634\)
+ 		endif
+-		USE_CYCLONE = 1
++		USE_CYCLONE = 0
+ 		ifneq (,$(findstring neon,$(platform)))
+-			HAVE_NEON = 1
++			HAVE_NEON = 0
+ 		endif
+ 	endif
+ 
+@@ -125,7 +125,7 @@ else ifeq ($(platform), webos)
+ 	SHARED := -shared -Wl,-no-undefined -Wl,--version-script=$(VERSION_SCRIPT)
+ 	ENDIANNESS_DEFINES := -DLSB_FIRST
+ 	LDFLAGS += -lpthread -ldl
+-	HAVE_NEON = 1
++	HAVE_NEON = 0
+ 
+ # OS X
+ else ifeq ($(platform), osx)
+@@ -160,8 +160,8 @@ else ifneq (,$(findstring ios,$(platform)))
+ 	TARGET := $(TARGET_NAME)_libretro_ios.dylib
+ 	fpic := -fPIC
+ 	SHARED := -dynamiclib
+-	HAVE_NEON = 1
+-	#USE_CYCLONE = 1
++	HAVE_NEON = 0
++	#USE_CYCLONE = 0
+ 	ifeq ($(IOSSDK),)
+ 		IOSSDK := $(shell xcodebuild -version -sdk iphoneos Path)
+ 	endif
+@@ -210,7 +210,7 @@ else ifeq ($(platform), theos_ios)
+ 	LIBRARY_NAME = $(TARGET_NAME)_libretro_ios
+ 	ENDIANNESS_DEFINES := -DLSB_FIRST
+ 	CFLAGS += -DIOS
+-	USE_CYCLONE = 1
++	USE_CYCLONE = 0
+ 
+ # QNX
+ else ifeq ($(platform), qnx)
+@@ -222,8 +222,8 @@ else ifeq ($(platform), qnx)
+ 	CXX = QCC -Vgcc_ntoarmv7le_cpp
+ 	AR = qcc -Vgcc_ntoarmv7le
+ 	PLATFORM_DEFINES := -D__BLACKBERRY_QNX__ -marm -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=softfp
+-	HAVE_NEON = 1
+-	USE_CYCLONE = 1
++	HAVE_NEON = 0
++	USE_CYCLONE = 0
+ 
+ # Lightweight PS3 Homebrew SDK
+ else ifneq (,$(filter $(platform), ps3 psl1ght))
+@@ -254,7 +254,7 @@ else ifeq ($(platform), vita)
+ 	CXXFLAGS += -mfloat-abi=hard -fsingle-precision-constant -fpermissive -fno-rtti
+ 	EXTERNAL_ZLIB = 1
+ 	STATIC_LINKING = 1
+-	USE_CYCLONE = 1
++	USE_CYCLONE = 0
+ 
+ # CTR (3DS)
+ else ifeq ($(platform), ctr)
+@@ -268,7 +268,7 @@ else ifeq ($(platform), ctr)
+ 	CXXFLAGS += -march=armv6k -mtune=mpcore -mfloat-abi=hard -fpermissive -fno-rtti
+ 	EXTERNAL_ZLIB = 1
+ 	STATIC_LINKING = 1
+-	USE_CYCLONE = 1
++	USE_CYCLONE = 0
+ 
+ # Xbox 360
+ else ifeq ($(platform), xenon)
+@@ -287,8 +287,8 @@ else ifeq ($(platform), switch)
+ 	STATIC_LINKING=1
+ 	ENDIANNESS_DEFINES := -DLSB_FIRST
+ 	PLATFORM_DEFINES := -marm -mcpu=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
+-	HAVE_NEON = 1
+-	USE_CYCLONE = 1
++	HAVE_NEON = 0
++	USE_CYCLONE = 0
+ 
+ # Nintendo Switch (libnx)
+ else ifeq ($(platform), libnx)
+@@ -315,9 +315,9 @@ else ifeq ($(platform), funkey)
+ 	SHARED := -shared -Wl,-no-undefined -Wl,--version-script=$(VERSION_SCRIPT)
+ 	PLATFORM_FLAGS = -marm -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
+ 	USE_EXPERIMENTAL_FLAGS = 1
+-	HAVE_NEON = 1
+-	USE_CYCLONE = 1
+-	ARCH = arm
++	HAVE_NEON = 0
++	USE_CYCLONE = 0
++	ARCH = arm64
+ 	ENDIANNESS_DEFINES := -DLSB_FIRST
+ 	ifeq ($(shell echo `$(CC) -dumpversion` "< 4.9" | bc -l), 1)
+ 		PLATFORM_FLAGS += -march=armv7-a
+@@ -343,9 +343,9 @@ else ifeq ($(platform), classic_armv7_a7)
+ 	SHARED := -shared -Wl,-no-undefined -Wl,--version-script=$(VERSION_SCRIPT)
+ 	PLATFORM_FLAGS = -marm -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
+ 	USE_EXPERIMENTAL_FLAGS = 1
+-	HAVE_NEON = 1
+-	USE_CYCLONE = 1
+-	ARCH = arm
++	HAVE_NEON = 0
++	USE_CYCLONE = 0
++	ARCH = arm64
+ 	ENDIANNESS_DEFINES := -DLSB_FIRST
+ 	ifeq ($(shell echo `$(CC) -dumpversion` "< 4.9" | bc -l), 1)
+ 		PLATFORM_FLAGS += -march=armv7-a
+@@ -359,6 +359,26 @@ else ifeq ($(platform), classic_armv7_a7)
  	CFLAGS += $(PLATFORM_FLAGS)
  	CXXFLAGS += $(PLATFORM_FLAGS)
  
 +# target platform tg5040 trimUI brick
 +else ifneq (,$(findstring tg5040,$(platform)))
-+	TARGET := $(TARGET_NAME)_libretro.so
 +	CC = $(CROSS_COMPILE)gcc
-+	CXX = $(CROSS_COMPILE)g++
++	AS = $(CROSS_COMPILE)as
 +	AR = $(CROSS_COMPILE)ar
++
++	TARGET := $(TARGET_NAME)_libretro.so
++	CXX=$(CROSS_COMPILE)g++
 +	fpic := -fPIC
 +	SHARED := -shared -Wl,-no-undefined -Wl,--version-script=$(VERSION_SCRIPT)
 +	PLATFORM_FLAGS := -O3 -Ofast -DNDEBUG=1 -fomit-frame-pointer -ffast-math -mtune=cortex-a53 -mcpu=cortex-a53 -march=armv8-a+simd
@@ -23,26 +156,37 @@ index 0b7d646c7..2784aa150 100644
 +	LDFLAGS += -lstdc++ -static-libgcc -static-libstdc++ -lpthread -lm -flto
 +	CFLAGS += $(PLATFORM_FLAGS)
 +	CXXFLAGS += $(PLATFORM_FLAGS)
-+
++	
  # (armv8 a35, hard point, neon based) ###
  # Playstation Classic
  else ifeq ($(platform), classic_armv8_a35)
+@@ -367,9 +387,9 @@ else ifeq ($(platform), classic_armv8_a35)
+ 	SHARED := -shared -Wl,-no-undefined -Wl,--version-script=$(VERSION_SCRIPT)
+ 	PLATFORM_FLAGS = -marm -mtune=cortex-a35 -mfpu=neon-fp-armv8 -mfloat-abi=hard -march=armv8-a
+ 	USE_EXPERIMENTAL_FLAGS = 1
+-	HAVE_NEON = 1
+-	USE_CYCLONE = 1
+-	ARCH = arm
++	HAVE_NEON = 0
++	USE_CYCLONE = 0
++	ARCH = arm64
+ 	ENDIANNESS_DEFINES := -DLSB_FIRST
+ 	LDFLAGS += -static-libgcc -static-libstdc++
+ 	CFLAGS += $(PLATFORM_FLAGS)
 diff --git a/src/burner/libretro/libretro.cpp b/src/burner/libretro/libretro.cpp
-index 3726ec60f..30a6c8cd6 100644
+index 65d4e299a..974759b58 100644
 --- a/src/burner/libretro/libretro.cpp
 +++ b/src/burner/libretro/libretro.cpp
-@@ -78,7 +78,9 @@ INT32 nAudSegLen = 0;
+@@ -79,7 +79,7 @@ INT32 nAudSegLen = 0;
  
  static UINT8* pVidImage              = NULL;
  static bool bVidImageNeedRealloc     = false;
 -static bool bRotationDone            = false;
 +static bool bRotationDone            = true;
-+static UINT8 *pRotateTmp              = NULL;
-+static size_t nRotateTmpSize         = 0;
  static int16_t *pAudBuffer           = NULL;
  static char text_missing_files[2048] = "";
  
-@@ -1550,8 +1550,46 @@ void retro_run()
+@@ -1565,8 +1565,46 @@ void retro_run()
  		// current frame will be corrupted, let's dupe instead
  		pBurnDraw = NULL;
  	}
@@ -50,56 +194,47 @@ index 3726ec60f..30a6c8cd6 100644
 +    UINT32 flags = BurnDrvGetFlags();
 +
 +    if (pBurnDraw && flags & BDF_ORIENTATION_VERTICAL) {
-+        int y = 0;
-+        size_t need = (size_t)nGameWidth * nGameHeight * nBurnBpp;
++        int y=0;
 +
-+        if (need > nRotateTmpSize) {
-+            UINT8 *p = (UINT8*)realloc(pRotateTmp, need);
-+            if (!p) {
-+                video_cb(pBurnDraw, nGameWidth, nGameHeight, nBurnPitch);
-+                need = 0;
-+            } else {
-+                pRotateTmp = p;
-+                nRotateTmpSize = need;
-+            }
-+        }
++        UINT8 *pTMP = (UINT8*)malloc(nGameWidth * nGameHeight * nBurnBpp);
++        memcpy(pTMP, pBurnDraw, nGameWidth * nGameHeight * nBurnBpp);
 +
-+        if (need && pRotateTmp) {
-+            memcpy(pRotateTmp, pBurnDraw, need);
++        int newGameWidth = nGameHeight;
++        int newGameHeight = nGameWidth;
++        int newBurnPitch = newGameWidth * nBurnBpp;
 +
-+            int newGameWidth = nGameHeight;
-+            int newGameHeight = nGameWidth;
-+            int newBurnPitch = newGameWidth * nBurnBpp;
++		if ((BurnDrvGetFlags() & BDF_ORIENTATION_VERTICAL))
++        while (y < newGameHeight) {
++            int x = 0;
 +
-+            while (y < newGameHeight) {
-+                int x = 0;
-+
-+                if (flags & BDF_ORIENTATION_FLIPPED) {
-+                    while (x < newGameWidth) {
-+                        for (int i = 0; i < nBurnBpp; i++)
-+                            pBurnDraw[x * nBurnBpp + y * newBurnPitch + i] = pRotateTmp[(nGameHeight - x - 1) * nBurnPitch + y * nBurnBpp + i];
-+                        x++;
-+                    }
-+                } else {
-+                    while (x < newGameWidth) {
-+                        for (int i = 0; i < nBurnBpp; i++)
-+                            pBurnDraw[x * nBurnBpp + y * newBurnPitch + i] = pRotateTmp[x * nBurnPitch + (nGameWidth - y - 1) * nBurnBpp + i];
-+                        x++;
-+                    }
++		    if ( flags & BDF_ORIENTATION_FLIPPED ) {
++                while (x < newGameWidth)
++                {
++                    for (int i = 0; i < nBurnBpp; i++)
++                        pBurnDraw[x * nBurnBpp + y * newBurnPitch + i] = pTMP[(nGameHeight - x - 1) * nBurnPitch + y * nBurnBpp + i];
++                    x++;
 +                }
-+                y++;
++            } else {
++                while (x < newGameWidth)
++                {
++                    for (int i = 0; i < nBurnBpp; i++)
++                        pBurnDraw[x * nBurnBpp + y * newBurnPitch + i] = pTMP[x * nBurnPitch + (nGameWidth - y - 1) * nBurnBpp + i];
++                    x++;
++                }
 +            }
-+            video_cb(pBurnDraw, newGameWidth, newGameHeight, newBurnPitch);
++            y++;
 +        }
++        free(pTMP);
++	    video_cb(pBurnDraw, newGameWidth, newGameHeight, newBurnPitch);
 +    } else {
-+        video_cb(pBurnDraw, nGameWidth, nGameHeight, nBurnPitch);
++	    video_cb(pBurnDraw, nGameWidth, nGameHeight, nBurnPitch);
 +    }
  
 -	video_cb(pBurnDraw, nGameWidth, nGameHeight, nBurnPitch);
  
  	bool updated = false;
  	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
-@@ -1567,7 +1605,7 @@ void retro_run()
+@@ -1582,7 +1620,7 @@ void retro_run()
  		// change orientation/geometry if vertical mode was toggled on/off
  		if (old_nVerticalMode != nVerticalMode)
  		{
@@ -108,7 +243,7 @@ index 3726ec60f..30a6c8cd6 100644
  			struct retro_system_av_info av_info;
  			retro_get_system_av_info(&av_info);
  			environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &av_info);
-@@ -2184,7 +2222,7 @@ static bool retro_load_game_common()
+@@ -2203,7 +2241,7 @@ static bool retro_load_game_common()
  
  		// Initializing display, autorotate if needed
  		BurnDrvGetFullSize(&nGameWidth, &nGameHeight);
