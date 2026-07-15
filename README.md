@@ -45,10 +45,12 @@ MinUI's existing **Save Changes** menu.
 
 This fork focuses exclusively on the tg5040 platform (TrimUI Smart Pro / Brick) with:
 
-- **CI/CD pipeline** -- Automated builds via GitHub Actions. Each push triggers a full toolchain and core build.
-- **FBNeo support** -- Final Burn Neo core for arcade emulation on TSP/Brick.
-- **Gameplay overlays** -- Transparent PNG overlays for in-game HUD elements.
-- **Patched cores** -- Pokemini deferred save state fix for reliable resume.
+- **CI/CD pipeline** -- Automated builds via GitHub Actions. Push tags to create releases.
+- **Dual-platform builds** -- Both trimuismart (Model S) and tg5040 (TSP/Brick) build in parallel from source.
+- **FBNeo support** -- Final Burn Neo core cross-compiled from source for arcade emulation.
+- **Gameplay overlays** -- Transparent PNG overlays for in-game HUD elements (minarch.elf compiled with `HAS_GAME_OVERLAYS=1`).
+- **Pico-8 support** -- fake-08 core cross-compiled with tg5040 platform target.
+- **Fresh binaries** -- All tg5040 cores, minarch.elf, and minui.elf rebuilt from source on every release.
 
 ## Why not NextUI?
 
