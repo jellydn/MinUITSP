@@ -117,3 +117,4 @@ index 3726ec60f..30a6c8cd6 100644
  		SetColorDepth();
  
  		VideoBufferInit();
+
