@@ -99,6 +99,11 @@ jobs:
       - name: List release files
         run: ls -lh releases/
 
+      - name: Checkout for git context
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
       - name: Create GitHub Release with gh CLI
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
