@@ -38,7 +38,7 @@ jobs:
           make -f makefile.toolchain ci-build PLATFORM=trimuismart
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: build
           path: workspace/
@@ -54,7 +54,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: build
           path: workspace/
@@ -74,7 +74,7 @@ jobs:
           make package
 
       - name: Upload release artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: release
           path: releases/
@@ -90,19 +90,19 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Checkout for git context
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
       - name: Download release artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: release
           path: releases/
 
       - name: List release files
         run: ls -lh releases/
-
-      - name: Checkout for git context
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
 
       - name: Create GitHub Release with gh CLI
         env:
