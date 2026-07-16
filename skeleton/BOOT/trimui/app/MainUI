@@ -5,6 +5,9 @@
 SDCARD_PATH=/mnt/SDCARD
 cd "$SDCARD_PATH/trimui/app"
 
+# clean old .tmp_update to prevent stale files from shadowing new ones
+rm -rf "$SDCARD_PATH/.tmp_update"
+
 # smart pro/brick
 if [ -f /usr/trimui/bin/runtrimui.sh ] && [ ! -f /usr/trimui/bin/runtrimui-original.sh ]; then
 	mv /usr/trimui/bin/runtrimui.sh /usr/trimui/bin/runtrimui-original.sh
