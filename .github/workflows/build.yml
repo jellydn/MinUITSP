@@ -156,6 +156,11 @@ jobs:
           cp ./workspace/tg5040/cores/output/mednafen_vb_libretro.so ./build/EXTRAS/Emus/tg5040/VB.pak || true
           cp ./workspace/tg5040/cores/output/fbneo_libretro.so ./build/EXTRAS/Emus/tg5040/FBN.pak || true
           cp ./workspace/tg5040/cores/output/fake08_libretro.so ./build/EXTRAS/Emus/tg5040/P8.pak || true
+          # tg5040 Tools (make system only populates trimuismart Tools)
+          cp ./workspace/all/clock/build/tg5040/clock.elf ./build/EXTRAS/Tools/tg5040/Clock.pak/
+          cp ./workspace/all/minput/build/tg5040/minput.elf ./build/EXTRAS/Tools/tg5040/Input.pak/
+          cp ./workspace/tg5040/other/DinguxCommander-sdl2/DinguxCommander ./build/EXTRAS/Tools/tg5040/Files.pak/
+          cp -r ./workspace/tg5040/other/DinguxCommander-sdl2/res ./build/EXTRAS/Tools/tg5040/Files.pak/
 
       - name: Finalize package
         run: |
