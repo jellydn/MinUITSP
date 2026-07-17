@@ -91,6 +91,10 @@ Extras:
 
 ## Installation
 
+**Recommended:** use the **[minui-easy-installer](https://github.com/jellydn/minui-easy-installer)** desktop app for a guided GUI — pick a release, prepare your SD card, and install base (and extras) without hand-copying zips.
+
+### Manual install
+
 1. Download the latest `*-base.zip` from [Releases](https://github.com/jellydn/MinUITSP/releases)
 2. Extract and copy `MinUI.zip` to your SD card root
 3. Power on your device -- MinUI will install automatically
